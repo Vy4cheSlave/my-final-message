@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="my final message" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="./static/jquery.highlight-within-textarea.js"></script>
+    <link href="./static/jquery.highlight-within-textarea.css" rel="stylesheet">
+    <link href="./static/site_style.css" rel="stylesheet">
+    <link rel="stylesheet" href="./static/textarea_style.css">
+    <script src="./static/fetch_request.js"></script>
+    <title></title>
+</head>
+
+<body>
+    <div class="parent"></div>
+    <div class="block">
+        <div class="site-title" class="internal-object">mp3 Decoder</div>
+        <div class="internal-object">
+            <input type="file" class="buttons" name="receivedFile" id="receivedFile" accept="audio/mpeg">
+        </div>
+        <div class="internal-object">
+            <label>Выберите язык</label>
+            <select id="langSelect" class="buttons">
+                <option value="ru">ru</option>
+                <option value="en">en</option>
+            </select>
+        </div>
+        <div class="internal-object"><button id="sendButton" class="buttons">Отправить</button></div>
+        </form>
+        <audio controls preload="auto" id="audioplayer" class="internal-object"></audio>
+        <div id="requestResult" class="internal-object"></div>
+    </div>
+    <script>
+        var player = document.getElementById('audioplayer');
+        var prevScrollPos = 0;
+        var controller = new AbortController();
+
+        document.getElementById('receivedFile').addEventListener('change', function (event) {
+            var file = this.files[0];
+            // var fileURL = URL.createObjectURL(file);
+            // player.src = fileURL;
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var fileCopy = e.target.result;
+                player.src = fileCopy;
+            };
+
+            reader.readAsDataURL(file);
+        });
+    </script>
+
+    <script>
+        var sendButton = document.getElementById('sendButton');
+        sendButton.addEventListener('click', request);
+    </script>
+</body>
+
+</html>
