@@ -87,10 +87,11 @@ import subprocess
 import json
 import os
 import sys
-import torch
+import pathlib
+# import torch
 
-file_name = sys.argv[1].split('\\')[-1].split('.mp3')[0] + '.txt'
-result_dir = sys.argv[2]
+file_name = pathlib.Path(sys.argv[1]).name.split('.mp3')[0] + '.txt'
+result_dir = pathlib.Path(sys.argv[2])
 chose_model_lang = ''
 if sys.argv[3] == 'ru':
     chose_model_lang = r"vosk-model-ru-0.22" #  r"vosk-model-small-ru-0.22" r"./vosk-model-ru-0.42"
@@ -128,19 +129,21 @@ final_parsed_string_right = ""
 for i in result2:
     final_parsed_string_right += str(i[0]) + "," + i[1] + ","
 
+
+
 # # Добавляем пунктуацию
 
 #model, example_texts, languages, punct, 
-_, _, _, _, apply_te = torch.hub.load(repo_or_dir='snakers4/silero-models',
-                                                                  model='silero_te')
-result1 = apply_te(result1)
+# _, _, _, _, apply_te = torch.hub.load(repo_or_dir='snakers4/silero-models',
+#                                                                   model='silero_te')
+# result1 = apply_te(result1)
 
-f = open(result_dir + file_name, 'w', encoding='utf-8')
+f = open(os.path.join(pathlib.Path.cwd(), result_dir, file_name), 'w', encoding='utf-8')
 f.write(result1 + '|')
 f.write(final_parsed_string_right[:-1])
 f.close()
 
-print(result1)
+# print(result1)
 
 os._exit(0)
 

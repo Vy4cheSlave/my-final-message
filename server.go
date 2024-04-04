@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -23,9 +24,9 @@ type File struct {
 
 var templates = template.Must(template.ParseFiles("index.html"))
 
-const downloadedFilesDir = "downloaded_files\\"
-const resultFilesDir = "result_files\\"
-const saveFileDir = "save_files\\"
+const downloadedFilesDir = "downloaded_files"
+const resultFilesDir = "result_files"
+const saveFileDir = "save_files"
 
 func indexHandle(w http.ResponseWriter, r *http.Request) {
 	err := templates.ExecuteTemplate(w, "index.html", nil)
@@ -36,7 +37,7 @@ func indexHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func receivedFileHandle(w http.ResponseWriter, r *http.Request) {
-	responseChannel := make(chan int)
+	responseChannel := make(chan struct{})
 	decoderStopper := make(chan struct{})
 
 	go func() {
@@ -55,7 +56,7 @@ func receivedFileHandle(w http.ResponseWriter, r *http.Request) {
 		// часть с созданием унимальных имен файлов
 
 		// This is path which we want to store the file
-		downloadedFile, err := os.OpenFile(downloadedFilesDir+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+		downloadedFile, err := os.OpenFile(path.Join(downloadedFilesDir, handler.Filename), os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			log.Println("[ERROR]  open file in", downloadedFilesDir, err)
 			return
@@ -68,14 +69,14 @@ func receivedFileHandle(w http.ResponseWriter, r *http.Request) {
 		downloadedFile.Close()
 
 		// decoder_output
-		err = runDecodeScript(decoderStopper, downloadedFilesDir+handler.Filename, resultFilesDir, languageFlag)
+		err = runDecodeScript(decoderStopper, path.Join(downloadedFilesDir, handler.Filename), resultFilesDir, languageFlag)
 		if err != nil {
 			log.Println("[ERROR]  decode.py", err)
 			return
 		}
 
 		fileName := handler.Filename[:len(handler.Filename)-3] + "txt"
-		resultFile, err := os.Open(resultFilesDir + fileName)
+		resultFile, err := os.Open(path.Join(resultFilesDir, fileName))
 		if err != nil {
 			log.Println("[ERROR]  open file in", resultFilesDir, err)
 			return
@@ -108,7 +109,7 @@ func receivedFileHandle(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(editFile)
 
-		responseChannel <- 0
+		responseChannel <- struct{}{}
 	}()
 
 	select {
@@ -125,7 +126,7 @@ func receivedFileHandle(w http.ResponseWriter, r *http.Request) {
 func runDecodeScript(decoderStopper <-chan struct{}, fullPathToFile string, outputPath string, languageFlag string) error {
 	decoderOut := make(chan error)
 
-	Cmd := exec.Command("py", "-3.11", "decode.py", fullPathToFile, outputPath, languageFlag)
+	Cmd := exec.Command("python3.11", "decode.py", fullPathToFile, outputPath, languageFlag)
 
 	go func() {
 		err := Cmd.Start()
@@ -169,7 +170,7 @@ func parseDecodeFile(wordsPointers *[]float64, sliceWords *[]string, bodyString 
 }
 
 func main() {
-	IP := "127.0.0.1"
+	IP := "0.0.0.0"
 	PORT := "3000"
 
 	arguments := os.Args
